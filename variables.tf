@@ -33,9 +33,14 @@ variable "data_key_secret_arn" {
   type        = string
 }
 
-variable "database_url_secret_arn" {
-  description = "Secrets Manager ARN holding the DATABASE_URL"
-  type        = string
+variable "db_instance_class" {
+  type    = string
+  default = "db.t4g.micro"
+}
+
+variable "db_engine_version" {
+  type    = string
+  default = "16"
 }
 
 variable "container_port" {

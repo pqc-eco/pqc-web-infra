@@ -3,4 +3,3 @@ image_uri                  = "<account-id>.dkr.ecr.us-east-1.amazonaws.com/pqc-w
 certificate_arn            = "arn:aws:acm:us-east-1:<account-id>:certificate/<id>"
 jwt_private_key_secret_arn = "arn:aws:secretsmanager:us-east-1:<account-id>:secret:pqc-web/jwt-private-key"
 data_key_secret_arn        = "arn:aws:secretsmanager:us-east-1:<account-id>:secret:pqc-web/data-key"
-database_url_secret_arn    = "arn:aws:secretsmanager:us-east-1:<account-id>:secret:pqc-web/database-url"

@@ -22,6 +22,14 @@ resource "aws_subnet" "public" {
   tags                    = { Name = "${var.name}-public-${count.index}" }
 }
 
+resource "aws_subnet" "private" {
+  count             = 2
+  vpc_id            = aws_vpc.this.id
+  cidr_block        = cidrsubnet(var.vpc_cidr, 8, count.index + 10)
+  availability_zone = data.aws_availability_zones.available.names[count.index]
+  tags              = { Name = "${var.name}-private-${count.index}" }
+}
+
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.this.id
 
@@ -35,6 +43,16 @@ resource "aws_route_table_association" "public" {
   count          = 2
   subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.this.id
+}
+
+resource "aws_route_table_association" "private" {
+  count          = 2
+  subnet_id      = aws_subnet.private[count.index].id
+  route_table_id = aws_route_table.private.id
 }
 
 resource "aws_security_group" "alb" {
@@ -82,6 +100,58 @@ resource "aws_security_group" "tasks" {
   }
 }
 
+resource "aws_security_group" "db" {
+  name_prefix = "${var.name}-db-"
+  vpc_id      = aws_vpc.this.id
+
+  ingress {
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.tasks.id]
+  }
+}
+
+resource "aws_db_subnet_group" "this" {
+  name       = "${var.name}-db"
+  subnet_ids = aws_subnet.private[*].id
+}
+
+resource "random_password" "db" {
+  length  = 32
+  special = false
+}
+
+resource "aws_db_instance" "this" {
+  identifier                 = "${var.name}-db"
+  engine                     = "postgres"
+  engine_version             = var.db_engine_version
+  instance_class             = var.db_instance_class
+  allocated_storage          = 20
+  storage_encrypted          = true
+  db_name                    = "pqcweb"
+  username                   = "app"
+  password                   = random_password.db.result
+  db_subnet_group_name       = aws_db_subnet_group.this.name
+  vpc_security_group_ids     = [aws_security_group.db.id]
+  publicly_accessible        = false
+  multi_az                   = false
+  backup_retention_period    = 7
+  auto_minor_version_upgrade = true
+  deletion_protection        = true
+  skip_final_snapshot        = false
+  final_snapshot_identifier  = "${var.name}-db-final"
+}
+
+resource "aws_secretsmanager_secret" "database_url" {
+  name = "${var.name}/database-url"
+}
+
+resource "aws_secretsmanager_secret_version" "database_url" {
+  secret_id     = aws_secretsmanager_secret.database_url.id
+  secret_string = "postgresql+psycopg2://app:${random_password.db.result}@${aws_db_instance.this.address}:5432/pqcweb"
+}
+
 resource "aws_ecr_repository" "app" {
   name                 = var.name
   image_tag_mutability = "IMMUTABLE"
@@ -123,7 +193,7 @@ data "aws_iam_policy_document" "read_secrets" {
     resources = [
       var.jwt_private_key_secret_arn,
       var.data_key_secret_arn,
-      var.database_url_secret_arn,
+      aws_secretsmanager_secret.database_url.arn,
     ]
   }
 }
@@ -159,7 +229,7 @@ resource "aws_ecs_task_definition" "app" {
     secrets = [
       { name = "JWT_PRIVATE_KEY_PEM", valueFrom = var.jwt_private_key_secret_arn },
       { name = "DATA_ENCRYPTION_KEY", valueFrom = var.data_key_secret_arn },
-      { name = "DATABASE_URL", valueFrom = var.database_url_secret_arn },
+      { name = "DATABASE_URL", valueFrom = aws_secretsmanager_secret.database_url.arn },
     ]
     logConfiguration = {
       logDriver = "awslogs"
@@ -241,5 +311,5 @@ resource "aws_ecs_service" "app" {
     container_port   = var.container_port
   }
 
-  depends_on = [aws_lb_listener.https]
+  depends_on = [aws_lb_listener.https, aws_db_instance.this]
 }
