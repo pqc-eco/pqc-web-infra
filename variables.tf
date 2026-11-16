@@ -57,3 +57,9 @@ variable "desired_count" {
   type    = number
   default = 2
 }
+
+variable "domain_name" {
+  description = "Public domain for the web API, for example pqc-web.tryturnwise.com"
+  type        = string
+  default     = "pqc-web.tryturnwise.com"
+}

@@ -151,7 +151,11 @@ resource "aws_ecs_task_definition" "app" {
     image        = var.image_uri
     essential    = true
     portMappings = [{ containerPort = var.container_port, protocol = "tcp" }]
-    environment  = [{ name = "APP_ENV", value = "production" }]
+    environment = [
+      { name = "APP_ENV", value = "production" },
+      { name = "TOKEN_ISSUER", value = "https://${var.domain_name}" },
+      { name = "TOKEN_AUDIENCE", value = "pqc-web-api" },
+    ]
     secrets = [
       { name = "JWT_PRIVATE_KEY_PEM", valueFrom = var.jwt_private_key_secret_arn },
       { name = "DATA_ENCRYPTION_KEY", valueFrom = var.data_key_secret_arn },
