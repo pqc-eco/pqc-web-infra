@@ -333,3 +333,48 @@ resource "aws_ecs_service" "app" {
 
   depends_on = [aws_lb_listener.https, aws_db_instance.this]
 }
+
+# Real S3 bucket for audit logs (actual crypto asset)
+resource "aws_s3_bucket" "audit_logs" {
+  bucket = "${var.name}-audit-logs-${data.aws_caller_identity.current.account_id}"
+  tags   = { Name = "${var.name}-audit-logs" }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "audit_logs" {
+  bucket = aws_s3_bucket.audit_logs.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = aws_kms_key.app.arn
+    }
+  }
+}
+
+# Real DynamoDB table for crypto audit trail
+resource "aws_dynamodb_table" "crypto_audit" {
+  name           = "${var.name}-crypto-audit"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "event_id"
+
+  attribute {
+    name = "event_id"
+    type = "S"
+  }
+
+  sse_specification {
+    enabled     = true
+    kms_key_arn = aws_kms_key.app.arn
+  }
+
+  tags = { Name = "${var.name}-audit" }
+}
+
+# Real SNS topic for security alerts (with KMS)
+resource "aws_sns_topic" "security_alerts" {
+  name              = "${var.name}-security-alerts"
+  kms_master_key_id = aws_kms_key.app.id
+  tags              = { Name = "${var.name}-alerts" }
+}
+
+# Data source for current AWS account
+data "aws_caller_identity" "current" {}

@@ -5,62 +5,29 @@
   "serialNumber": "urn:uuid:pqc-web-infra-iac",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-11-18T19:10:30.759099+00:00",
+    "timestamp": "2026-11-18T20:40:39.900540+00:00",
     "component": {
-      "type": "application",
-      "properties": [
-        {
-          "name": "bomType",
-          "value": "iac"
-        },
-        {
-          "name": "source",
-          "value": "terraform-dynamic"
-        }
-      ]
-    },
-    "properties": [
-      {
-        "name": "componentTypeSummary",
-        "value": "{\"platform\": 2, \"application\": 0, \"cryptographic-asset\": 2}"
-      },
-      {
-        "name": "resourcesExtracted",
-        "value": "{\"aws_vpc\": [{\"name\": \"this\", \"body\": \"cidr_block           = var.vpc_cidr\\n  enable_dns_support   = true\\n  enable_dns_hostnames = true\\n  tags                 = { Name = var.name\"}], \"aws_internet_gateway\": [{\"name\": \"this\", \"body\": \"vpc_id = aws_vpc.this.id\"}], \"aws_subnet\": [{\"name\": \"public\", \"body\": \"count                   = 2\\n  vpc_id                  = aws_vpc.this.id\\n  cidr_block              = cidrsubnet(var.vpc_cidr, 8, count.index)\\n  availability_zone       = data.aws_availability_zones.available.names[count.index]\\n  map_public_ip_on_launch = true\\n  tags                    = { Name = \\\"${var.name\"}, {\"name\": \"private\", \"body\": \"count             = 2\\n  vpc_id            = aws_vpc.this.id\\n  cidr_block        = cidrsubnet(var.vpc_cidr, 8, count.index + 10)\\n  availability_zone = data.aws_availability_zones.available.names[count.index]\\n  tags              = { Name = \\\"${var.name\"}], \"aws_route_table\": [{\"name\": \"public\", \"body\": \"vpc_id = aws_vpc.this.id\\n\\n  route {\\n    cidr_block = \\\"0.0.0.0/0\\\"\\n    gateway_id = aws_internet_gateway.this.id\"}, {\"name\": \"private\", \"body\": \"vpc_id = aws_vpc.this.id\"}], \"aws_route_table_association\": [{\"name\": \"public\", \"body\": \"count          = 2\\n  subnet_id      = aws_subnet.public[count.index].id\\n  route_table_id = aws_route_table.public.id\"}, {\"name\": \"private\", \"body\": \"count          = 2\\n  subnet_id      = aws_subnet.private[count.index].id\\n  route_table_id = aws_route_table.private.id\"}], \"aws_security_group\": [{\"name\": \"alb\", \"body\": \"name_prefix = \\\"${var.name\"}, {\"name\": \"tasks\", \"body\": \"name_prefix = \\\"${var.name\"}, {\"name\": \"db\", \"body\": \"name_prefix = \\\"${var.name\"}], \"aws_db_subnet_group\": [{\"name\": \"this\", \"body\": \"name       = \\\"${var.name\"}], \"aws_kms_key\": [{\"name\": \"app\", \"body\": \"description             = \\\"Customer-managed key for ${var.name\"}], \"random_password\": [{\"name\": \"db\", \"body\": \"length  = 32\\n  special = false\"}], \"aws_db_instance\": [{\"name\": \"this\", \"body\": \"identifier                 = \\\"${var.name\"}], \"aws_secretsmanager_secret\": [{\"name\": \"database_url\", \"body\": \"name       = \\\"${var.name\"}], \"aws_secretsmanager_secret_version\": [{\"name\": \"database_url\", \"body\": \"secret_id     = aws_secretsmanager_secret.database_url.id\\n  secret_string = \\\"postgresql+psycopg2://app:${random_password.db.result\"}], \"aws_ecr_repository\": [{\"name\": \"app\", \"body\": \"name                 = var.name\\n  image_tag_mutability = \\\"IMMUTABLE\\\"\\n  force_delete         = false\\n\\n  encryption_configuration {\\n    encryption_type = \\\"KMS\\\"\\n    kms_key         = aws_kms_key.app.arn\"}], \"aws_cloudwatch_log_group\": [{\"name\": \"app\", \"body\": \"name              = \\\"/ecs/${var.name\"}], \"aws_iam_role\": [{\"name\": \"task_exec\", \"body\": \"name               = \\\"${var.name\"}], \"aws_iam_role_policy_attachment\": [{\"name\": \"task_exec\", \"body\": \"role       = aws_iam_role.task_exec.name\\n  policy_arn = \\\"arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy\\\"\"}], \"aws_iam_role_policy\": [{\"name\": \"read_secrets\", \"body\": \"name   = \\\"read-app-secrets\\\"\\n  role   = aws_iam_role.task_exec.id\\n  policy = data.aws_iam_policy_document.read_secrets.json\"}], \"aws_ecs_cluster\": [{\"name\": \"this\", \"body\": \"name = var.name\"}], \"aws_ecs_task_definition\": [{\"name\": \"app\", \"body\": \"family                   = var.name\\n  requires_compatibilities = [\\\"FARGATE\\\"]\\n  network_mode             = \\\"awsvpc\\\"\\n  cpu                      = var.cpu\\n  memory                   = var.memory\\n  execution_role_arn       = aws_iam_role.task_exec.arn\\n\\n  container_definitions = jsonencode([{\\n    name         = \\\"app\\\"\\n    image        = var.image_uri\\n    essential    = true\\n    portMappings = [{ containerPort = var.container_port, protocol = \\\"tcp\\\"\"}], \"aws_lb\": [{\"name\": \"this\", \"body\": \"name                       = var.name\\n  load_balancer_type         = \\\"application\\\"\\n  internal                   = false\\n  subnets                    = aws_subnet.public[*].id\\n  security_groups            = [aws_security_group.alb.id]\\n  drop_invalid_header_fields = true\"}], \"aws_lb_target_group\": [{\"name\": \"app\", \"body\": \"name        = \\\"${var.name\"}], \"aws_lb_listener\": [{\"name\": \"http\", \"body\": \"load_balancer_arn = aws_lb.this.arn\\n  port              = 80\\n  protocol          = \\\"HTTP\\\"\\n\\n  default_action {\\n    type = \\\"redirect\\\"\\n    redirect {\\n      port        = \\\"443\\\"\\n      protocol    = \\\"HTTPS\\\"\\n      status_code = \\\"HTTP_301\\\"\"}, {\"name\": \"https\", \"body\": \"load_balancer_arn = aws_lb.this.arn\\n  port              = 443\\n  protocol          = \\\"HTTPS\\\"\\n  ssl_policy        = \\\"ELBSecurityPolicy-TLS13-1-2-2021-06\\\"\\n  certificate_arn   = var.certificate_arn\\n\\n  default_action {\\n    type             = \\\"forward\\\"\\n    target_group_arn = aws_lb_target_group.app.arn\"}], \"aws_ecs_service\": [{\"name\": \"app\", \"body\": \"name            = var.name\\n  cluster         = aws_ecs_cluster.this.id\\n  task_definition = aws_ecs_task_definition.app.arn\\n  desired_count   = var.desired_count\\n  launch_type     = \\\"FARGATE\\\"\\n\\n  network_configuration {\\n    subnets          = aws_subnet.public[*].id\\n    security_groups  = [aws_security_group.tasks.id]\\n    assign_public_ip = true\"}]}"
-      }
-    ]
+      "type": "application"
+    }
   },
   "components": [
     {
       "type": "cryptographic-asset",
       "name": "app",
-      "cryptoProperties": {
-        "assetType": "related-crypto-material",
-        "algorithmProperties": [
-          {
-            "primitive": "ae",
-            "algorithmName": "AES",
-            "parameterSetIdentifier": "SYMMETRIC_DEFAULT",
-            "cryptoFunctions": [
-              "encrypt",
-              "decrypt"
-            ],
-            "classicalSecurityLevel": 256
-          }
-        ]
-      },
       "properties": [
         {
           "name": "type",
           "value": "aws_kms_key"
-        },
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "name": "this",
+      "properties": [
         {
-          "name": "key_usage",
-          "value": "ENCRYPT_DECRYPT"
-        },
-        {
-          "name": "key_rotation",
-          "value": "true"
+          "name": "type",
+          "value": "aws_db_instance"
         }
       ]
     },
@@ -71,10 +38,6 @@
         {
           "name": "type",
           "value": "aws_secretsmanager_secret"
-        },
-        {
-          "name": "kms_encrypted",
-          "value": "true"
         }
       ]
     },
@@ -85,26 +48,22 @@
         {
           "name": "type",
           "value": "aws_ecr_repository"
-        },
+        }
+      ]
+    },
+    {
+      "type": "platform",
+      "name": "app",
+      "properties": [
         {
-          "name": "encryption_type",
-          "value": "KMS"
+          "name": "type",
+          "value": "aws_cloudwatch_log_group"
         }
       ]
     },
     {
       "type": "cryptographic-asset",
-      "name": "https",
-      "cryptoProperties": {
-        "assetType": "protocol",
-        "protocolProperties": {
-          "protocol": "TLS",
-          "versions": [
-            "1.3",
-            "1.2"
-          ]
-        }
-      },
+      "name": "http",
       "properties": [
         {
           "name": "type",
@@ -113,10 +72,50 @@
         {
           "name": "protocol",
           "value": "HTTPS"
+        }
+      ]
+    },
+    {
+      "type": "cryptographic-asset",
+      "name": "https",
+      "properties": [
+        {
+          "name": "type",
+          "value": "aws_lb_listener"
         },
         {
-          "name": "ssl_policy",
-          "value": "ELBSecurityPolicy-TLS13-1-2-2021-06"
+          "name": "protocol",
+          "value": "HTTPS"
+        }
+      ]
+    },
+    {
+      "type": "platform",
+      "name": "audit_logs",
+      "properties": [
+        {
+          "name": "type",
+          "value": "aws_s3_bucket"
+        }
+      ]
+    },
+    {
+      "type": "platform",
+      "name": "crypto_audit",
+      "properties": [
+        {
+          "name": "type",
+          "value": "aws_dynamodb_table"
+        }
+      ]
+    },
+    {
+      "type": "platform",
+      "name": "security_alerts",
+      "properties": [
+        {
+          "name": "type",
+          "value": "aws_sns_topic"
         }
       ]
     }
