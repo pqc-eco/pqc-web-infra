@@ -117,6 +117,13 @@ resource "aws_db_subnet_group" "this" {
   subnet_ids = aws_subnet.private[*].id
 }
 
+resource "aws_kms_key" "app" {
+  description             = "Customer-managed key for ${var.name} (RDS, Secrets Manager, ECR, CloudWatch)"
+  deletion_window_in_days = 30
+  enable_key_rotation     = true
+  tags                    = { Name = "${var.name}-app" }
+}
+
 resource "random_password" "db" {
   length  = 32
   special = false
@@ -129,6 +136,7 @@ resource "aws_db_instance" "this" {
   instance_class             = var.db_instance_class
   allocated_storage          = 20
   storage_encrypted          = true
+  kms_key_id                 = aws_kms_key.app.arn
   db_name                    = "pqcweb"
   username                   = "app"
   password                   = random_password.db.result
@@ -144,7 +152,8 @@ resource "aws_db_instance" "this" {
 }
 
 resource "aws_secretsmanager_secret" "database_url" {
-  name = "${var.name}/database-url"
+  name       = "${var.name}/database-url"
+  kms_key_id = aws_kms_key.app.arn
 }
 
 resource "aws_secretsmanager_secret_version" "database_url" {
@@ -157,6 +166,11 @@ resource "aws_ecr_repository" "app" {
   image_tag_mutability = "IMMUTABLE"
   force_delete         = false
 
+  encryption_configuration {
+    encryption_type = "KMS"
+    kms_key         = aws_kms_key.app.arn
+  }
+
   image_scanning_configuration {
     scan_on_push = true
   }
@@ -165,6 +179,7 @@ resource "aws_ecr_repository" "app" {
 resource "aws_cloudwatch_log_group" "app" {
   name              = "/ecs/${var.name}"
   retention_in_days = 30
+  kms_key_id        = aws_kms_key.app.arn
 }
 
 data "aws_iam_policy_document" "task_exec_assume" {
@@ -195,6 +210,11 @@ data "aws_iam_policy_document" "read_secrets" {
       var.data_key_secret_arn,
       aws_secretsmanager_secret.database_url.arn,
     ]
+  }
+
+  statement {
+    actions   = ["kms:Decrypt"]
+    resources = [aws_kms_key.app.arn]
   }
 }
 

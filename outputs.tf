@@ -12,3 +12,8 @@ output "api_url" {
   description = "Public HTTPS URL of the web API"
   value       = "https://${var.domain_name}"
 }
+
+output "kms_key_arn" {
+  description = "Customer-managed KMS key used for RDS, Secrets Manager, ECR and CloudWatch"
+  value       = aws_kms_key.app.arn
+}
